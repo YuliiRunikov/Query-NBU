@@ -4,7 +4,21 @@ namespace QueryNBU;
 
 use \GuzzleHttp\Client;
 
-class ZaprosNBU extends EntityAbstract {
+class ZaprosNBU {
+
+  protected $log;
+
+  protected $client;
+
+  protected $entity = '';
+
+  public function __construct($entity, $logger, $client)
+  {
+    $this->entity = $entity;
+    $this->log=$logger;
+    $this->client=$client;
+  } 
+
   const TEMPLATE = 'https://bank.gov.ua/NBUStatService/v1/statdirectory/exchangenew?json&date=%s';
   const DATE_FORMAT = 'Ymd'; 
   
@@ -34,3 +48,6 @@ class ZaprosNBU extends EntityAbstract {
 
   }
 }
+
+
+  
