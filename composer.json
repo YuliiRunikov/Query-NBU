@@ -1,0 +1,19 @@
+{
+    "name": "diynyk/zapros_nbu",
+    "type": "project",
+    "require": {
+      "symfony/console": "~5",
+      "symfony/yaml": "~5",
+      "symfony/dependency-injection": "~5",
+      "symfony/config": "~5",
+      "guzzlehttp/guzzle": "~7",
+      "monolog/monolog": "~2"
+    },
+    "license": "MIT",
+    "minimum-stability": "dev",
+    "autoload": {
+      "psr-4": {
+        "QueryNBU\\": "src"
+      }
+    }
+  }
