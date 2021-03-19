@@ -1,11 +1,10 @@
 <?php
 
-namespace Diynik_NBU_sdk;
+namespace Diynyk_nbu_sdk;
 
 use \GuzzleHttp\Client;
 
-class ZaprosNBU
-{
+class ZaprosNBU {
 
   protected $log;
 
@@ -16,37 +15,36 @@ class ZaprosNBU
   public function __construct($entity, $logger, $client)
   {
     $this->entity = $entity;
-    $this->log = $logger;
-    $this->client = $client;
-  }
+    $this->log=$logger;
+    $this->client=$client;
+  } 
 
   const TEMPLATE = 'https://bank.gov.ua/NBUStatService/v1/statdirectory/exchangenew?json&date=%s';
-  const DATE_FORMAT = 'Ymd';
+  const DATE_FORMAT = 'Ymd'; 
+  
 
-
-  public function getRates()
-  {
-    $url =
-      vsprintf(
+  public function getRates() {
+    $url =    
+    vsprintf(
         self::TEMPLATE,
         [
-          date(self::DATE_FORMAT)
+         date (self::DATE_FORMAT)
         ]
       );
-    // die ($url);          
-
+     // die ($url);          
+    
     $response = $this->client->request(
       'GET',
-      $url
-    );
+      $url);
 
-    if ($response->getStatusCode() >= 400) {
+    if ($response->getStatusCode() >= 400 ) {
       die('error');
     }
-
+    
     $data = json_decode($response->getBody(), true);
-
-    $rates = array_column($data, 'rate', 'cc');
+    
+    $rates= array_column($data, 'rate', 'cc');
     return  $rates;
+
   }
 }
