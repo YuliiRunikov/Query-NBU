@@ -1,5 +1,5 @@
 {
-    "name": "diynyk/zapros_nbu",
+    "name": "diynyk/query_nbu",
     "type": "project",
     "require": {
       "symfony/console": "~5",
