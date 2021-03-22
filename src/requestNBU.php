@@ -47,7 +47,7 @@ class requestNBU {
     }
   }
 
-  public function givesAnswer(){
+  public function getRates(){
 
     $callgetData= $this->getData;
 
