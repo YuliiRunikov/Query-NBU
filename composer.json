@@ -9,7 +9,7 @@
   "minimum-stability": "dev",
   "autoload": {
     "psr-4": {
-      "Diynyk\\NBU\\": "src"
+      "Diynyk\\Nbu\\": "src"
     }
   }
 }
