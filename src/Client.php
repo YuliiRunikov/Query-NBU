@@ -2,40 +2,85 @@
 
 namespace Diynyk\Nbu;
 
+use DateTime;
 use GuzzleHttp\Client as gClient;
+use GuzzleHttp\Exception\BadResponseException;
+use GuzzleHttp\Exception\GuzzleException;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
 
-class Client {
+class Client
+{
+    const TEMPLATE = 'https://bank.gov.ua/NBUStatService/v1/statdirectory/exchangenew?json&date=%s';
+    const DATE_FORMAT = 'Ymd';
 
-  private LoggerInterface $log;
+    /**
+     * @var LoggerInterface
+     */
+    private $log;
 
-  private gClient $client;
+    /**
+     * @var gClient
+     */
+    private $client;
 
-  public function __construct(LoggerInterface $logger, gClient $client)
-  {
-    $this->log = $logger;
-    $this->client = $client;
-  } 
-
-  const TEMPLATE = 'https://bank.gov.ua/NBUStatService/v1/statdirectory/exchangenew?json&date=%s';
-  const DATE_FORMAT = 'Ymd'; 
-  
-  private function getData(DateTime $date) {
-    $url = vsprintf(self::TEMPLATE, [$date->format(self::DATE_FORMAT)]);
-    $response = $this->client->request('GET', $url);
-  }
-
-  public function transformResponse($data) {
-    return array_column($data, 'rate', 'cc');
-  }
-
-  public function getRates(DateTime $date) {
-    $nbuResponse = $this->getData($date);
-    
-    if ($nbuResponse->getStatusCode() >= 400 ) {
-      die('error');
+    /**
+     * Client constructor.
+     * @param LoggerInterface $logger
+     * @param gClient $client
+     */
+    public function __construct(LoggerInterface $logger, gClient $client)
+    {
+        $this->log = $logger;
+        $this->client = $client;
     }
-    $data = json_decode($nbuResponse->getBody(), true);
-    return  $this->transformResponse($data);
-  }
+
+    /**
+     * @param DateTime $date
+     * @return ResponseInterface
+     * @throws GuzzleException
+     */
+    private function getData(DateTime $date): ResponseInterface
+    {
+        $url = vsprintf(self::TEMPLATE, [$date->format(self::DATE_FORMAT)]);
+        $this->log->debug(vsprintf('Using request url=%s', [$url]));
+
+        return $this->client->request('GET', $url);
+    }
+
+    /**
+     * @param array $data
+     * @return array
+     */
+    private function transformResponse(array $data): array
+    {
+        return array_column($data, 'rate', 'cc');
+    }
+
+    /**
+     * @param DateTime $date
+     * @return array
+     * @throws GuzzleException
+     */
+    public function getRates(DateTime $date): array
+    {
+        $nbuResponse = $this->getData($date);
+
+        $body = $nbuResponse->getBody();
+
+        if ($nbuResponse->getStatusCode() >= 400) {
+            $this->log->error(vsprintf('Got bad request response: %s', [$body]));
+            throw new BadResponseException('Got Bad Response');
+        }
+
+        $this->log->debug(vsprintf('Got response body: %s', [$body]));
+        $data = json_decode($body, true);
+
+        if (is_null($data) || empty($data)) {
+            $this->log->error(vsprintf('Failed decoding response: %s', [$body]));
+            throw new BadResponseException('Failed decoding response');
+        }
+
+        return $this->transformResponse($data);
+    }
 }
