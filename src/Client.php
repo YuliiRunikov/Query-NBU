@@ -37,15 +37,22 @@ class Client
 
     /**
      * @param DateTime $date
+     * @return string
+     */
+    private function buildUrl(DateTime $date) : string {
+        $url = vsprintf(self::TEMPLATE, [$date->format(self::DATE_FORMAT)]);
+        $this->log->debug(vsprintf('Using request url=%s', [$url]));
+        return $url;
+    }
+
+    /**
+     * @param DateTime $date
      * @return ResponseInterface
      * @throws GuzzleException
      */
     private function getData(DateTime $date): ResponseInterface
     {
-        $url = vsprintf(self::TEMPLATE, [$date->format(self::DATE_FORMAT)]);
-        $this->log->debug(vsprintf('Using request url=%s', [$url]));
-
-        return $this->client->request('GET', $url);
+        return $this->client->request('GET', $this->buildUrl($date));
     }
 
     /**
