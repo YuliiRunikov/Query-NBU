@@ -1,20 +1,18 @@
 <?php
 
-namespace Diynyk_nbu_sdk;
+namespace diynyk\nbu\sdk;
 
 use \GuzzleHttp\Client;
 
-class ZaprosNBU {
+class requestNBU {
 
   protected $log;
 
   protected $client;
 
-  protected $entity = '';
-
-  public function __construct($entity, $logger, $client)
+  
+  public function __construct( $logger, $client)
   {
-    $this->entity = $entity;
     $this->log=$logger;
     $this->client=$client;
   } 
@@ -23,7 +21,9 @@ class ZaprosNBU {
   const DATE_FORMAT = 'Ymd'; 
   
 
-  public function getRates() {
+
+  private function getData() {
+
     $url =    
     vsprintf(
         self::TEMPLATE,
@@ -31,19 +31,27 @@ class ZaprosNBU {
          date (self::DATE_FORMAT)
         ]
       );
-     // die ($url);          
-    
+
+  }
+
+  public function transformResponse(){
+
     $response = $this->client->request(
       'GET',
-      $url);
+      $this->getData);
 
     if ($response->getStatusCode() >= 400 ) {
       die('error');
+
+      $data = json_decode($response->getBody(), true);
     }
-    
-    $data = json_decode($response->getBody(), true);
-    
-    $rates= array_column($data, 'rate', 'cc');
+  }
+
+  public function givesAnswer(){
+
+    $callgetData= $this->getData;
+
+    $rates= array_column($this->transformResponse, 'rate', 'cc');
     return  $rates;
 
   }
