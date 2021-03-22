@@ -3,10 +3,12 @@
 namespace Diynyk\Nbu;
 
 use DateTime;
+use Exception;
 use GuzzleHttp\Client as gClient;
 use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\GuzzleException;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamInterface;
 use Psr\Log\LoggerInterface;
 
 class Client
@@ -39,7 +41,8 @@ class Client
      * @param DateTime $date
      * @return string
      */
-    private function buildUrl(DateTime $date) : string {
+    protected function buildUrl(DateTime $date): string
+    {
         $url = vsprintf(self::TEMPLATE, [$date->format(self::DATE_FORMAT)]);
         $this->log->debug(vsprintf('Using request url=%s', [$url]));
         return $url;
@@ -65,6 +68,15 @@ class Client
     }
 
     /**
+     * @param ResponseInterface $response
+     * @return StreamInterface
+     */
+    protected function extractBody(ResponseInterface $response): string
+    {
+        return (string)$response->getBody();
+    }
+
+    /**
      * @param DateTime $date
      * @return array
      * @throws GuzzleException
@@ -73,7 +85,7 @@ class Client
     {
         $nbuResponse = $this->getData($date);
 
-        $body = $nbuResponse->getBody();
+        $body = $this->extractBody($nbuResponse);
 
         if ($nbuResponse->getStatusCode() >= 400) {
             $this->log->error(vsprintf('Got bad request response: %s', [$body]));
@@ -85,7 +97,7 @@ class Client
 
         if (is_null($data) || empty($data)) {
             $this->log->error(vsprintf('Failed decoding response: %s', [$body]));
-            throw new BadResponseException('Failed decoding response');
+            throw new Exception('Failed decoding response');
         }
 
         return $this->transformResponse($data);
