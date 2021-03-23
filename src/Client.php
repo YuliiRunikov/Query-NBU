@@ -3,9 +3,9 @@
 namespace Diynyk\Nbu;
 
 use DateTime;
-use Exception;
+use Diynyk\Nbu\Exceptions\NbuSdkBadBodyException;
+use Diynyk\Nbu\Exceptions\NbuSdkBadResponseException;
 use GuzzleHttp\Client as gClient;
-use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\GuzzleException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
@@ -89,7 +89,7 @@ class Client
 
         if ($nbuResponse->getStatusCode() >= 400) {
             $this->log->error(vsprintf('Got bad request response: %s', [$body]));
-            throw new BadResponseException('Got Bad Response');
+            throw new NbuSdkBadResponseException('Got Bad Response');
         }
 
         $this->log->debug(vsprintf('Got response body: %s', [$body]));
@@ -97,7 +97,7 @@ class Client
 
         if (is_null($data) || empty($data)) {
             $this->log->error(vsprintf('Failed decoding response: %s', [$body]));
-            throw new Exception('Failed decoding response');
+            throw new NbuSdkBadBodyException('Failed decoding response');
         }
 
         return $this->transformResponse($data);

@@ -1,6 +1,10 @@
 <?php
 
-use GuzzleHttp\Client;
+use Diynyk\Nbu\Client;
+use Diynyk\Nbu\Exceptions\NbuSdkBadBodyException;
+use Diynyk\Nbu\Exceptions\NbuSdkBadResponseException;
+use GuzzleHttp\Client as gClient;
+use GuzzleHttp\Exception\ClientException;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -17,7 +21,7 @@ class ClientTest extends TestCase
     private $logger;
 
     /**
-     * @var Client
+     * @var gClient
      */
     private $client;
 
@@ -38,17 +42,17 @@ class ClientTest extends TestCase
     }
 
     /**
-     * @return Client
+     * @return gClient
      */
-    public function getClient(): Client
+    public function getClient(): gClient
     {
         return $this->client;
     }
 
     /**
-     * @param Client $client
+     * @param gClient $client
      */
-    public function setClient(Client $client): void
+    public function setClient(gClient $client): void
     {
         $this->client = $client;
     }
@@ -56,58 +60,81 @@ class ClientTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->setClient(new Client());
+        $this->setClient(new gClient());
         $this->setLogger(new NullLogger());
     }
 
+    /**
+     * @return DateTime
+     */
+    protected function getDate(): DateTime
+    {
+        return new DateTime('now');
+    }
+
+    /**
+     * @param string $method
+     * @param string $result
+     * @return Client
+     */
+    private function getMockedObj(string $method, string $result): Client
+    {
+        $mock = $this->getMockBuilder(Client::class)
+            ->setConstructorArgs([$this->getLogger(), $this->getClient()])
+            ->onlyMethods([$method])
+            ->getMock();
+
+        $mock->expects($this->exactly(1))
+            ->method($method)
+            ->willReturn($result);
+
+        return $mock;
+    }
+
+    /**
+     * @covers Client::getRates
+     */
     public function testGetRates()
     {
-        $nbuClient = new Diynyk\Nbu\Client(
+        $nbuClient = new Client(
             $this->getLogger(),
             $this->getClient()
         );
 
-        $data = $nbuClient->getRates(new DateTime('now'));
-
-        $this->assertArrayHasKey('USD', $data);
+        try {
+            $this->assertArrayHasKey('USD', $nbuClient->getRates($this->getDate()));
+        } catch (GuzzleException $e) {
+        }
     }
 
+    /**
+     * @covers Client::getRates
+     */
     public function testGetRatesBadRequest()
     {
         // Request SHOULD fail and produce RequestException
-        $this->expectException(GuzzleHttp\Exception\RequestException::class);
+        $this->expectException(ClientException::class);
 
-        $date = new DateTime('now');
 
-        $mock = $this->getMockBuilder(\Diynyk\Nbu\Client::class)
-            ->setConstructorArgs([$this->getLogger(), $this->getClient()])
-            ->onlyMethods(['buildUrl'])
-            ->getMock();
-
-        $mock->expects($this->exactly(1))
-            ->method('buildUrl')
-            ->willReturn('https://google.com/no-file.txt'); // <-- not exists, force 4XX error
-
-        $mock->getRates($date);
+        $this->getMockedObj(
+            'buildUrl',
+            'https://google.com/no-file.txt'
+        )->getRates($this->getDate());
     }
 
+    /**
+     * @covers Client::getRates
+     */
     public function testGetRatesBadJson()
     {
         // Request SHOULD fail and produce Exception
-        $this->expectException(Exception::class);
+        $this->expectException(NbuSdkBadBodyException::class);
         $this->expectExceptionMessage('Failed decoding response');
 
-        $date = new DateTime('now');
 
-        $mock = $this->getMockBuilder(\Diynyk\Nbu\Client::class)
-            ->setConstructorArgs([$this->getLogger(), $this->getClient()])
-            ->onlyMethods(['extractBody'])
-            ->getMock();
-
-        $mock->expects($this->exactly(1))
-            ->method('extractBody')
-            ->willReturn('not json'); // <-- bad JSON
-
-        $mock->getRates($date);
+        $this->getMockedObj(
+            'extractBody',
+            'not json'
+        )->getRates($this->getDate());
     }
 }
