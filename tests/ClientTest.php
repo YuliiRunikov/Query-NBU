@@ -2,9 +2,9 @@
 
 use Diynyk\Nbu\Client;
 use Diynyk\Nbu\Exceptions\NbuSdkBadBodyException;
-use Diynyk\Nbu\Exceptions\NbuSdkBadResponseException;
 use GuzzleHttp\Client as gClient;
 use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\GuzzleException;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -93,6 +93,7 @@ class ClientTest extends TestCase
 
     /**
      * @covers Client::getRates
+     * @throws GuzzleException
      */
     public function testGetRates()
     {
@@ -101,10 +102,7 @@ class ClientTest extends TestCase
             $this->getClient()
         );
 
-        try {
-            $this->assertArrayHasKey('USD', $nbuClient->getRates($this->getDate()));
-        } catch (GuzzleException $e) {
-        }
+        $this->assertArrayHasKey('USD', $nbuClient->getRates($this->getDate()));
     }
 
     /**
