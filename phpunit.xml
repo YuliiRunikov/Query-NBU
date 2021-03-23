@@ -19,5 +19,8 @@
         <whitelist addUncoveredFilesFromWhitelist="true">
             <directory suffix=".php">./src</directory>
         </whitelist>
+        <blacklist>
+            <directory suffix="Exception.php">src/Exceptions/</directory>
+        </blacklist>
     </filter>
 </phpunit>

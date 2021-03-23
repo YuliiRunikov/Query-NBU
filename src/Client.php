@@ -7,6 +7,7 @@ use Diynyk\Nbu\Exceptions\NbuSdkBadBodyException;
 use Diynyk\Nbu\Exceptions\NbuSdkBadResponseException;
 use GuzzleHttp\Client as gClient;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\RequestOptions;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
 use Psr\Log\LoggerInterface;
@@ -48,6 +49,13 @@ class Client
         return $url;
     }
 
+    private function getClientOptions(): array
+    {
+        return [
+            RequestOptions::HTTP_ERRORS => false,
+        ];
+    }
+
     /**
      * @param DateTime $date
      * @return ResponseInterface
@@ -55,7 +63,7 @@ class Client
      */
     private function getData(DateTime $date): ResponseInterface
     {
-        return $this->client->request('GET', $this->buildUrl($date));
+        return $this->client->request('GET', $this->buildUrl($date), $this->getClientOptions());
     }
 
     /**

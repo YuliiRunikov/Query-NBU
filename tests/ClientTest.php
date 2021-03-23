@@ -2,8 +2,8 @@
 
 use Diynyk\Nbu\Client;
 use Diynyk\Nbu\Exceptions\NbuSdkBadBodyException;
+use Diynyk\Nbu\Exceptions\NbuSdkBadResponseException;
 use GuzzleHttp\Client as gClient;
-use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\GuzzleException;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -111,7 +111,7 @@ class ClientTest extends TestCase
     public function testGetRatesBadRequest()
     {
         // Request SHOULD fail and produce RequestException
-        $this->expectException(ClientException::class);
+        $this->expectException(NbuSdkBadResponseException::class);
 
 
         $this->getMockedObj(
