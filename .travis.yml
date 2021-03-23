@@ -3,7 +3,6 @@ language: php
 php:
   - 7.3
   - 7.4
-  - 8.0
 
 before_script:
   - travis_retry composer self-update
@@ -13,4 +12,6 @@ script:
   - vendor/bin/phpunit --coverage-clover coverage.xml
 
 after_success:
+  - ls -lah
+  - cat coverage.xml
   - bash <(curl -s https://codecov.io/bash)
