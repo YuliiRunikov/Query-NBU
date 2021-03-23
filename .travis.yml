@@ -1,8 +1,11 @@
 language: php
 
 php:
-  - 7.3
   - 7.4
+
+cache:
+  directories:
+    - $HOME/.composer/cache/files
 
 before_script:
   - travis_retry composer self-update
@@ -13,3 +16,5 @@ script:
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
+  - if [[ "${TRAVIS_TAG}" != "" ]]; then curl -XPOST -H'content-type:application/json' 'https://packagist.org/api/update-package?username=${COMPOSER_USERNAME}&apiToken=${COMPOSER_TOKEN}' -d'{"repository":{"url":"github.com/${TRAVIS_REPO_SLUG}"}}'; fi
+
