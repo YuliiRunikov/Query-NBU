@@ -3,10 +3,12 @@
 namespace Diynyk\Nbu;
 
 use DateTime;
+use Diynyk\Nbu\Exceptions\NbuSdkBadBodyException;
+use Diynyk\Nbu\Exceptions\NbuSdkBadResponseException;
 use GuzzleHttp\Client as gClient;
-use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\GuzzleException;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamInterface;
 use Psr\Log\LoggerInterface;
 
 class Client
@@ -37,15 +39,23 @@ class Client
 
     /**
      * @param DateTime $date
+     * @return string
+     */
+    protected function buildUrl(DateTime $date): string
+    {
+        $url = vsprintf(self::TEMPLATE, [$date->format(self::DATE_FORMAT)]);
+        $this->log->debug(vsprintf('Using request url=%s', [$url]));
+        return $url;
+    }
+
+    /**
+     * @param DateTime $date
      * @return ResponseInterface
      * @throws GuzzleException
      */
     private function getData(DateTime $date): ResponseInterface
     {
-        $url = vsprintf(self::TEMPLATE, [$date->format(self::DATE_FORMAT)]);
-        $this->log->debug(vsprintf('Using request url=%s', [$url]));
-
-        return $this->client->request('GET', $url);
+        return $this->client->request('GET', $this->buildUrl($date));
     }
 
     /**
@@ -58,6 +68,15 @@ class Client
     }
 
     /**
+     * @param ResponseInterface $response
+     * @return StreamInterface
+     */
+    protected function extractBody(ResponseInterface $response): string
+    {
+        return (string)$response->getBody();
+    }
+
+    /**
      * @param DateTime $date
      * @return array
      * @throws GuzzleException
@@ -66,11 +85,11 @@ class Client
     {
         $nbuResponse = $this->getData($date);
 
-        $body = $nbuResponse->getBody();
+        $body = $this->extractBody($nbuResponse);
 
         if ($nbuResponse->getStatusCode() >= 400) {
             $this->log->error(vsprintf('Got bad request response: %s', [$body]));
-            throw new BadResponseException('Got Bad Response');
+            throw new NbuSdkBadResponseException('Got Bad Response');
         }
 
         $this->log->debug(vsprintf('Got response body: %s', [$body]));
@@ -78,7 +97,7 @@ class Client
 
         if (is_null($data) || empty($data)) {
             $this->log->error(vsprintf('Failed decoding response: %s', [$body]));
-            throw new BadResponseException('Failed decoding response');
+            throw new NbuSdkBadBodyException('Failed decoding response');
         }
 
         return $this->transformResponse($data);
